@@ -1,10 +1,6 @@
  <?php
 /***********************************************************************************************
-########## Author : Mr. Khwanchai Kaewyos (LookHin), Teuku Muhammad Rivai (BuffFreak) ##########
-##########            Rewrite Code From : https://github.com/mgp25/Instagram-API           ##########
-##########                     CHANGE THIS LINE DONT MAKE YOU A CODER!                   ##########
-##########                    Official Blog : https://bahasakomputer.com                   ##########
-##########                   Official Instagram LFL : https://instakuy.com               ##########
+RIVAI GANTENG 123
 ***********************************************************************************************/
 error_reporting(0);
 error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));
