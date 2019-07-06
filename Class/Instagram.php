@@ -177,7 +177,7 @@ class InstagramUpload {
         if ($csrftoken != "") {
             return $csrftoken;
         } else {
-            print $result;
+            return $result;
         }
     }
     public function commentPost($mode = 0, $komen = array()){
@@ -250,7 +250,7 @@ class InstagramUpload {
             $uid = $arrResult['logged_in_user']['pk'];
             return array($uid, $this->cookies);
         } else {
-            print $body;
+            return $body;
         }
     }
     public function buildBody($bodies, $boundary) {
@@ -330,7 +330,7 @@ class InstagramUpload {
         if ($arrResult['status'] == "ok") {
             return true;
         } else {
-            print $arrResult['status'];
+            return $arrResult['status'];
         }
     }
     private function ConfigPhotoApi($caption) {
@@ -380,7 +380,7 @@ class InstagramUpload {
         if ($arrResult['status'] == "ok") {
             return true;
         } else {
-            print $arrResult['status'];
+            return $arrResult['status'];
         }
     }
     private function generateDeviceId() {
