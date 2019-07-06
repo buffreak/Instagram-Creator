@@ -22,18 +22,18 @@ class InstagramUpload {
     private $android_manufacturer = "Huawei";
     private $android_model = "EVA-L19";
     private $headers = array();
-    private $socks;
+    public $socks;
     private $token;
     private $user_agent = "Instagram 10.3.2 Android (18/4.3; 320dpi; 720x1280; Huawei; HWEVA; EVA-L19; qcom; en_US)";
     public function __construct() {
-        $this->guid = $this->generateUUID();
-        $this->phone_id = $this->generateUUID();
+        $this->guid =$this->generateUUID();
+        $this->phone_id =$this->generateUUID();
         $this->device_id = $this->generateDeviceId();
         $this->upload_id = $this->generateUploadId();
         $this->headers[] = "X-IG-Capabilities: " . $this->x_ig_capabilities;
         $this->headers[] = "X-IG-Connection-Type: WIFI";
     }
-    public function curl($url, $cookie = 0, $data = 0, $useragent, $returntransfer = 0, $timeout = 0, $followlocation = 0, $host = 0, $peer = 0, $customrequest = 0, $encoding = 0, $verbose = 0, $httpheader = array(), $debug = 0) {
+    public function curl($url, $cookie = 0, $data = 0, $useragent, $returntransfer = 0, $timeout = 0, $followlocation = 0, $host = 0, $peer = 0, $customrequest = 0, $encoding = 0, $verbose = 0, $httpheader = array(), $debug = 1) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
@@ -86,39 +86,66 @@ class InstagramUpload {
             $header_len = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
             $header = substr($response, 0, $header_len);
             $body = substr($response, $header_len);
-            return array($header, json_decode($body, true));
+            return array($header, $body);
         else:
             return $response;
         endif;
         curl_close($ch);
     }
-    //public function Login($username="", $password="",$socks = 0){
-    // $this->username = $username;
-    // $this->password = $password;
-    // $this->socks = $socks;
-    // $this->csrftoken = $this->GetToken();
-    //$arrUidAndCooike = $this->GetLoginUidAndCookie();
-    //$this->uid = $arrUidAndCooike[0];
-    //$this->cookies = $arrUidAndCooike[1];
-    //}
     public function createAccount($username, $password, $email, $name, $socks = 0) {
         $this->username = $username;
         $this->password = $password;
         $this->socks = $socks;
         $this->csrftoken = $this->GetToken();
-        $data = json_encode(array('phone_id' => $this->phone_id, '_csrftoken' => $this->csrftoken, // missing
-        'username' => $username, 'first_name' => $name, 'guid' => $this->guid, 'device_id' => 'android-' . str_split(md5(mt_rand(1000, 9999)), 17) [mt_rand(0, 1) ], 'email' => $email, 'force_sign_up_code' => '', 'qs_stamp' => '', 'password' => $password));
+        $data = json_encode(
+            array('phone_id' => $this->phone_id, '_csrftoken' => $this->csrftoken, 'username' => $this->username, 'first_name' => $name, 'guid' => $this->guid, 'device_id' => 'android-' . str_split(md5(mt_rand(1000, 9999)), 17) [mt_rand(0, 1) ], 'email' => $email, 'force_sign_up_code' => '', 'qs_stamp' => '', 'password' => $this->password));
         $result = $this->curl($this->api_url . "/accounts/create/", 0, $this->generateSignature($data), $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1);
-        if (isset($result[1]['account_created']) && ($result[1]['account_created'] == true)) {
-            preg_match_all('%Set-Cookie: (?!urlgen)(.*?);%', $result[0], $match);
-            $this->token = $match[1];
-            $parseCookie = array('ds_user=' . strtolower($username), $this->token[5], $this->token[0], $this->token[1], $this->token[2], $this->token[3], $this->token[4]);
-            $this->cookies = implode(";", $parseCookie) . ';';
-            $str = $this->token[2];
-            $explodeID = explode("=", $str);
-            $this->uid = $explodeID;
+        $status = json_decode($result[1], true);
+        // if (isset($status['account_created']) && ($status['account_created'] == true)) {
+        //     preg_match_all('%set-cookie:(.*?);%', $result[0], $match);
+        //     $this->cookies = implode(";", $match[1]) . ';';
+        // }
+        return array($status, $this->cookies);
+    }
+    public function loginAccount($socks = 0){
+        $this->socks = $socks;
+        $postq = json_encode([
+            'phone_id' => $this->generateUUID(true),
+            '_csrftoken' => $this->GetToken(),
+            'username' => $this->username,
+            'guid' => $this->generateUUID(true),
+            'device_id' => $this->generateUUID(true),
+            'password' => $this->password,
+            'login_attempt_count' => 0
+        ]);
+        $a = $this->curl($this->api_url . "/accounts/login/", 0, $this->generateSignature($postq), $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1);
+        $header = $a[0];
+        $a = json_decode($a[1], true);
+	    if($a['status'] == 'ok'){
+            preg_match_all('/set-cookie:([^;]+)/',$header,$d);
+            $this->cookies = '';
+            for($o=0;$o<count($d[0]);$o++){
+                $this->cookies .= trim($d[1][$o].";");
+            }
+            return [$a['status'], $this->cookies];
+        }else{
+           return $a['status'];
         }
-        return array($result[1], $this->cookies);
+    }
+    public function generateUUID($type = true)
+    {
+        $uuid = sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
+        return $type ? $uuid : str_replace('-', '', $uuid);
     }
     public function generate_useragent($sign_version = '10.8.0') {
         $resolusi = array('1080x1776', '1080x1920', '720x1280', '320x480', '480x800', '1024x768', '1280x720', '768x1024', '480x320');
@@ -128,8 +155,13 @@ class InstagramUpload {
         return 'Instagram ' . $sign_version . ' Android (' . mt_rand(10, 11) . '/' . mt_rand(1, 3) . '.' . mt_rand(3, 5) . '.' . mt_rand(0, 5) . '; ' . $dpi[array_rand($dpi) ] . '; ' . $resolusi[array_rand($resolusi) ] . '; samsung; ' . $ver . '; ' . $ver . '; smdkc210; en_US)';
     }
     public function UploadPhoto($image, $caption) {
-        $this->UploadPhotoApi($image);
-        $this->ConfigPhotoApi($caption);
+        $config = $this->UploadPhotoApi($image);
+        $upload = $this->ConfigPhotoApi($caption);
+        if($config === true && $upload === true){
+            return true;
+        }else{
+            return $upload." ~ ".$config;
+        }
     }
     public function UploadVideo($video, $image, $caption) {
         $this->UploadVideoApi($video);
@@ -140,7 +172,7 @@ class InstagramUpload {
     private function GetToken() {
         $strUrl = $this->api_url . "/si/fetch_headers/?challenge_type=signup";
         $result = $this->curl($strUrl, 0, 0, $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers);
-        preg_match_all("|csrftoken=(.*);|U", $result, $arrOut, PREG_PATTERN_ORDER);
+        preg_match_all("|csrftoken=(.*);|U", $result[0], $arrOut, PREG_PATTERN_ORDER);
         $csrftoken = $arrOut[1][0];
         if ($csrftoken != "") {
             return $csrftoken;
@@ -154,10 +186,10 @@ class InstagramUpload {
         }
     }
     public function directMessage($target,$ua,$cookie,$text){
-        $apinya = curl('https://i.instagram.com/api/v1/users/'.$target.'/info/');
+        $apinya = $this->curl($this->api_url . "/users/".$target."/usernameinfo/", $this->cookies, 0, $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1)[1];
         $hpr = json_decode($apinya, 1);
         $uid = $hpr['user']['pk'];
-        $boundary = generateUUID(true);
+        $boundary = $this->generateUUID(true);
         $bodies = array(
             array(
                 'type' => 'form-data',
@@ -167,7 +199,7 @@ class InstagramUpload {
             array(
                 'type' => 'form-data',
                 'name' => 'client_context',
-                'data' => generateUUID(true),
+                'data' => $this->generateUUID(true),
             ),
             array(
                 'type' => 'form-data',
@@ -188,17 +220,16 @@ class InstagramUpload {
             'Content-Type: multipart/form-data; boundary='.$boundary,
             'Accept-Language: en-en',
         );
-        $post = $this->curl($this->api_url.'/direct_v2/threads/broadcast/text/', $this->cookies, $data, $this->generate_useragent(), 1, 0, 0, 0, 0, 0, 0, 0, $headers,1);   
-        return $post[1];
+        $post = $this->curl($this->api_url.'/direct_v2/threads/broadcast/text/', $this->cookies, $data, $this->generate_useragent(), 1, 0, 0, 0, 0, 0, 0, 0, $headers, 1)[1];   
+        return $post;
     }
 
     public function setBio($bio = array()){
         $getinfo = $this->curl($this->api_url.'/accounts/current_user/?edit=true', $this->cookies, 0, $this->generate_useragent(), 1, 0, 0, 0, 0, 0, 0, 0, $this->headers,1);
-        $getinfo = $getinfo[1];
+        $getinfo = json_decode($getinfo[1], true);
 
-        $post = $this->curl($this->api_url.'/accounts/edit_profile/', $this->cookies ,$this->generateSignature('{"_uid":"'.$this->uid.'","_csrftoken":"'.$this->csrftoken.'","first_name":"'.$getinfo['user']['full_name'].'","is_private":"false","phone_number":"'.$getinfo['user']['phone_number'].'","biography":"'.$bio[array_rand($bio)].'","username":"'.$getinfo['user']['username'].'","gender":"'.$getinfo['user']['gender'].'","email":"'.$getinfo['user']['email'].'","_uuid":"'.$this->upload_id.'","external_url":"'.$getinfo['user']['external_url'].'"}'), $this->generate_useragent(), 1, 0, 0, 0, 0, 0, 0, 0, $this->headers,1);
-
-        return $post[1];
+        $post = $this->curl($this->api_url.'/accounts/edit_profile/', $this->cookies ,$this->generateSignature('{"_uid":"'.$this->uid.'","_csrftoken":"'.$this->csrftoken.'","first_name":"'.$getinfo['user']['full_name'].'","is_private":"false","phone_number":"'.$getinfo['user']['phone_number'].'","biography":"'.$bio[array_rand($bio)].'","username":"'.$getinfo['user']['username'].'","gender":"'.$getinfo['user']['gender'].'","email":"'.$getinfo['user']['email'].'","_uuid":"'.$this->upload_id.'","external_url":"'.$getinfo['user']['external_url'].'"}'), $this->generate_useragent(), 1, 0, 0, 0, 0, 0, 0, 0, $this->headers,1)[1];
+        return $post;
     }
 
     private function GetLoginUidAndCookie() {
@@ -212,13 +243,12 @@ class InstagramUpload {
         $arrPostData['password'] = $this->password;
         $strUrl = $this->api_url . "/accounts/login/";
         $result = $this->curl($strUrl, 0, $this->generateSignature(json_encode($arrPostData)), $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers);
-        list($header, $body) = explode("\r\n\r\n", $result, 2);
-        preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $header, $matches);
-        $cookies = implode(";", $matches[1]);
-        $arrResult = json_decode($body, true);
+        preg_match_all('/^set-cookie:\s*([^;]*)/mi', $result[0], $matches);
+        $this->cookies = implode(";", $matches[1]).";";
+        $arrResult = json_decode($result[1], true);
         if ($arrResult['status'] == "ok") {
             $uid = $arrResult['logged_in_user']['pk'];
-            return array($uid, $cookies);
+            return array($uid, $this->cookies);
         } else {
             print $body;
         }
@@ -245,27 +275,24 @@ class InstagramUpload {
     public function profileChange($photo) {
         $uData = json_encode(['_csrftoken' => $this->csrftoken, '_uuid' => $this->upload_id, '_uid' => $this->uid]);
         $endpoint = $this->api_url . '/accounts/change_profile_picture/';
-        $boundary = $this->generateUUID();
+        $boundary =$this->generateUUID();
         $bodies = [['type' => 'form-data', 'name' => 'sig_key_version', 'data' => 4], ['type' => 'form-data', 'name' => 'signed_body', 'data' => $this->generateSignature($uData) ], ['type' => 'form-data', 'name' => 'profile_pic', 'data' => file_get_contents($photo), 'filename' => 'profile_pic', 'headers' => ['Content-type: application/octet-stream', 'Content-Transfer-Encoding: binary']]];
         $data = $this->buildBody($bodies, $boundary);
         $headers = ['Connection: close', 'Accept: */*', 'X-IG-Capabilities: ' . $this->x_ig_capabilities, 'X-IG-Connection-Type: WIFI ', 'X-IG-Connection-Speed: ' . mt_rand(1000, 3700) . 'kbps', 'X-FB-HTTP-Engine: Liger', 'Content-Type: multipart/form-data; boundary=' . $boundary, 'Content-Length: ' . strlen($data), 'Accept-Language: ' . 'en-US', 'X-Forwarded-For: ' . $_SERVER['SERVER_ADDR']];
-        $resp = $this->curl($endpoint, $this->cookies, $data, $this->user_agent, 1, 0, 1, 0, 0, 0, '', 0, $headers);
-        return $resp;
+        $resp = json_decode($this->curl($endpoint, $this->cookies, $data, $this->user_agent, 1, 0, 1, 0, 0, 0, '', 0, $headers)[1], true);
+        return $resp['status'];
     }
     public function followUser($username) {
-        $getFile = file_get_contents("http://api.bahasakomputer.com/instagram/?username=" . $username);
-        $decode = json_decode($getFile, true);
-        $id = $decode['id'];
-        $follow = $this->curl($this->api_url . "/friendships/create/" . $id . "/", $this->cookies, $this->generateSignature('{"user_id":"' . $id . '"}'), $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1);
-        //$follow = $this->instagram(1, $this->user_agent, "friendships/create/".$id."/", $this->cookies, $this->generateSignature('{"user_id":"'.$id.'"}'));
-        return $follow[1];
+        $getID = json_decode($this->curl($this->api_url . "/users/".$target."/usernameinfo/", $this->cookies, 0, $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1), true);
+        $id = $getID['user']['pk'];
+        $follow = json_decode($this->curl($this->api_url . "/friendships/create/" . $id . "/", $this->cookies, $this->generateSignature('{"user_id":"' . $id . '"}'), $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1)[1], true);
+        return $follow['status'];
     }
     public function reportUser($username) {
-        $getFile = file_get_contents("http://api.bahasakomputer.com/instagram/?username=" . $username);
-        $decode = json_decode($getFile, true);
-        $id = $decode['id'];
-        $report = $this->curl($this->api_url . "/users/" . $id . "/flag_user/", $this->cookies, $this->generateSignature('{"source_name":"profile","reason_id":1}'), $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1);
-        return $report[1];
+        $getID = json_decode($this->curl($this->api_url . "/users/".$target."/usernameinfo/", $this->cookies, 0, $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1), true);
+        $id = $getID['user']['pk'];
+        $report = $this->curl($this->api_url . "/users/" . $id . "/flag_user/", $this->cookies, $this->generateSignature('{"source_name":"profile","reason_id":1}'), $this->generate_useragent(), 1, 20, 1, 0, 0, 0, 0, 0, 1, 1)[1];
+        return $report['status'];
     }
     private function UploadPhotoApi($file) {
         $arrPostData = array();
@@ -275,12 +302,12 @@ class InstagramUpload {
         $arrPostData['image_compression'] = '{"lib_name":"jt","lib_version":"1.3.0","quality":"100"}';
         $arrPostData['photo'] = curl_file_create(realpath($file));
         $strUrl = $this->api_url . "/upload/photo/";
-        $result = $this->curl($strUrl, $this->cookies, $arrPostData, $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers);
+        $result = $this->curl($strUrl, $this->cookies, $arrPostData, $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers)[1];
         $arrResult = json_decode($result, true);
         if ($arrResult['status'] == "ok") {
             return true;
         } else {
-            print $result;
+            return $arrResult['status'];
         }
     }
     private function UploadVideoApi($file) {
@@ -290,7 +317,7 @@ class InstagramUpload {
         $arrPostData['upload_id'] = $this->upload_id;
         $arrPostData['media_type'] = '2';
         $strUrl = $this->api_url . "/upload/video/";
-        $result = $this->curl($strUrl, $this->cookies, $arrPostData, $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers);
+        $result = $this->curl($strUrl, $this->cookies, $arrPostData, $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers)[1];
         $arrResult = json_decode($result, true);
         $uploadUrl = $arrResult['video_upload_urls'][3]['url'];
         $job = $arrResult['video_upload_urls'][3]['job'];
@@ -298,11 +325,12 @@ class InstagramUpload {
         $headers[] = "Session-ID: " . $this->upload_id;
         $headers[] = "job: " . $job;
         $headers[] = "Content-Disposition: attachment; filename=\"video.mp4\"";
-        $result = $this->curl($uploadUrl, $this->cookies, file_get_contents(realpath($file)), $this->user_agent, 1, 0, 0, 0, 0, 'POST', 0, 0, $headers);
+        $result = $this->curl($uploadUrl, $this->cookies, file_get_contents(realpath($file)), $this->user_agent, 1, 0, 0, 0, 0, 'POST', 0, 0, $headers)[1];
+        $arrResult = json_decode($result, true);
         if ($arrResult['status'] == "ok") {
             return true;
         } else {
-            print $result;
+            print $arrResult['status'];
         }
     }
     private function ConfigPhotoApi($caption) {
@@ -320,12 +348,12 @@ class InstagramUpload {
         $arrPostData['device']['android_version'] = $this->android_version;
         $arrPostData['device']['android_release'] = $this->android_release;
         $strUrl = $this->api_url . "/media/configure/";
-        $result = $this->curl($strUrl, $this->cookies, $this->generateSignature(json_encode($arrPostData)), $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers);
+        $result = $this->curl($strUrl, $this->cookies, $this->generateSignature(json_encode($arrPostData)), $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers)[1];
         $arrResult = json_decode($result, true);
         if ($arrResult['status'] == "ok") {
             return true;
         } else {
-            print $result;
+            return $arrResult['status'];
         }
     }
     private function ConfigVideoApi($caption) {
@@ -347,20 +375,16 @@ class InstagramUpload {
         $arrPostData['device']['android_version'] = $this->android_version;
         $arrPostData['device']['android_release'] = $this->android_release;
         $strUrl = $this->api_url . "/media/configure/?video=1";
-        $result = $this->curl($strUrl, $this->cookies, $this->generateSignature(json_encode($arrPostData)), $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers);
+        $result = $this->curl($strUrl, $this->cookies, $this->generateSignature(json_encode($arrPostData)), $this->user_agent, 1, 0, 0, 0, 0, 0, 0, 0, $this->headers)[1];
         $arrResult = json_decode($result, true);
         if ($arrResult['status'] == "ok") {
             return true;
         } else {
-            print $result;
+            print $arrResult['status'];
         }
     }
-    private function generateUUID() {
-        $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
-        return $uuid;
-    }
     private function generateDeviceId() {
-        return 'android-' . substr(md5(time()), 16);
+        return "android-".substr(md5(time()), 16);
     }
     private function generateSignature($data) {
         $hash = hash_hmac('sha256', $data, $this->ig_sig_key);
