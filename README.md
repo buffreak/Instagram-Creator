@@ -1,9 +1,9 @@
 # Instagram Creator
 <b style="font-size:16px">BACA ASUPAN DIBAWAH</b>
-<ul>
+<ol>
   <li>Pake Socks Biar Mantep</li>
   <li>Ngga ada Socks kasi delay ~ 10 Menitan</li>
-</ul>
+</ol>
 <b style="font-size:16px">ASUPAN UPDATE</b>
 <ol>
   <li>Auto Follow Ke target yang ditentukan.</li>
