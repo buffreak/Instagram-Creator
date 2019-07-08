@@ -1,5 +1,4 @@
 # Instagram Creator
-<b style="font-size:22px">DAH DI UPDATE, ALPHA VERSION V1.0a</b>
 <br>
 <b style="font-size:16px">ASUPAN TIPS</b>
 <ol>
