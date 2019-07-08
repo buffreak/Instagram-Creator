@@ -9,7 +9,7 @@
   <li>Auto Follow Ke target yang ditentukan.<li>
   <li>Nama Real Indo</li>
   <li>Auto Change profile sesuai kelamin yang udah SET</li>
-  <ol>Auto Post foto random ke timeline biar dikira IG idup dikit</li>
+  <li>Auto Post foto random ke timeline biar dikira IG idup dikit</li>
   <li>Gatau lagi apa</li>
 </ul>
 <b style="font-size:16px">ASUPAN BUG</b>
