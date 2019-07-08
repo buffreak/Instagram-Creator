@@ -1,5 +1,5 @@
-# Instagram Creator
-<br>
+<b style="font-size:16px">INSTAGRAM CREATOR</b>
+<hr>
 <b style="font-size:16px">ASUPAN TIPS</b>
 <ol>
   <li>Pake Socks Biar Mantep</li>
