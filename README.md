@@ -1,5 +1,6 @@
 # Instagram Creator
-<b style="font-size:16px">BACA ASUPAN DIBAWAH</b>
+<b style="font-size:22px">DAH DI UPDATE, ALPHA VERSION V1.0a</b>
+<b style="font-size:16px">ASUPAN TIPS</b>
 <ol>
   <li>Pake Socks Biar Mantep</li>
   <li>Ngga ada Socks kasi delay ~ 10 Menitan</li>
