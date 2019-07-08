@@ -1,2 +1,19 @@
-# Instagram-Creator
-IG Creator, Username Indo, WIth Photo, + Upload Photo, USE SOCKS
+# Instagram Creator
+<b style="font-size:16px">BACA ASUPAN DIBAWAH</b>
+<ul>
+  <li>Pake Socks Biar Mantep</li>
+  <li>Ngga ada Socks kasi delay ~ 10 Menitan</li>
+</ul>
+<b style="font-size:16px">ASUPAN UPDATE</b>
+<ul>
+  <li>Auto Follow Ke target yang ditentukan.<li>
+  <li>Nama Real Indo</li>
+  <li>Auto Change profile sesuai kelamin yang udah SET</li>
+  <ol>Auto Post foto random ke timeline biar dikira IG idup dikit</li>
+  <li>Gatau lagi apa</li>
+</ul>
+<b style="font-size:16px">ASUPAN BUG</b>
+<ol>
+  <li>Warning Error nya masi banyak, kalau mau debug ilangi error_reporting nya</li>
+  <li>Gatau lagi apa</li>
+</ol>
