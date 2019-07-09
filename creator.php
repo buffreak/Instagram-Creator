@@ -85,7 +85,7 @@ for ($i = 0; $i < $jumlah; $i++) {
     $instagram = new InstagramUpload();
     if ($pakaiSock == 1) {
         $instagram->socks = $explodeSocks[$mulaiSocks];
-        $createAccount = $instagram->createAccount($usernameArray[$usernameRandom], $password, $email, $name, $socksData);
+        $createAccount = $instagram->createAccount($usernameArray[$usernameRandom], $password, $email, $name, $instagram->socks);
     } else {
         $createAccount = $instagram->createAccount($usernameArray[$usernameRandom], $password, $email, $name);
     }
@@ -121,7 +121,7 @@ for ($i = 0; $i < $jumlah; $i++) {
     } else {
         if ($pakaiSock == 1) {
             $mulaiSocks++;
-            echo "ERROR! |" . $statusAccount['message'] . "|" . $statusAccount['feedback_message'] . "|" . $socksData . "|" . $usernameArray[$usernameRandom] . "|" . $password . "\n\n";
+            echo "ERROR! |" . $statusAccount['message'] . "|" . $statusAccount['feedback_message'] . "|" . $instagram->socks . "|" . $usernameArray[$usernameRandom] . "|" . $password . "\n\n";
         } else {
             echo "ERROR! |" . $statusAccount['message'] . "|" . $statusAccount['feedback_message'] . "|" . $usernameArray[$usernameRandom] . "|" . $password . "\n\n";
         }
